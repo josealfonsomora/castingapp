@@ -17,8 +17,13 @@ from django.contrib import admin
 from django.urls import path
 
 from apps.accounts.views import EmailTokenObtainPairView
+from apps.posts.views import PostResource, PostSingleResource, PostMediaResource, PostMediaSingleResource
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('login/', EmailTokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path('posts/<int:postid>/', PostSingleResource.as_view()),
+    path('posts/', PostResource.as_view()),
+    path('postmedia/<int:postid>/', PostMediaSingleResource.as_view()),
+    path('postmedia/', PostMediaResource.as_view())
 ]

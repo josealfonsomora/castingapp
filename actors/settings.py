@@ -116,19 +116,15 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/3.0/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_L10N = True
-
 USE_TZ = True
 
 # django-storages
-AWS_ACCESS_KEY_ID = 'AKIAWY4QGEDNX3MXF6KS'
-AWS_SECRET_ACCESS_KEY = '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'
-AWS_STORAGE_BUCKET_NAME = 'tymapp.api.staging'
+AWS_ACCESS_KEY_ID = 'AKIA5VJ4ODGHHSID6OSN'
+AWS_SECRET_ACCESS_KEY = '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'
+AWS_STORAGE_BUCKET_NAME = 'safehouse-actors'
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 AWS_S3_FILE_OVERWRITE = False
 AWS_S3_REGION_NAME = 'eu-west-1'

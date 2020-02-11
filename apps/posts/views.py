@@ -55,9 +55,36 @@ class PostResource(APIView):
 
 class PostSingleResource(APIView):
     permission_classes = (permissions.IsAuthenticated,)
-    def put(self, request, postid):
-        post = Post.objects.filter(id=postid)
 
+    def get(self, request, postid):
+        posts = Post.objects.get(id=postid)
+        serialized_data = serializers.serialize('json', [posts, ], use_natural_foreign_keys=True)
+        payload = {
+            "status": "success",
+            "data": json.loads(serialized_data)
+        }
+        return JsonResponse(payload, status=200)
+
+    def put(self, request, postid):
+        try:
+            payload = json.loads(request.body)
+            post = Post.objects.filter(id=postid)
+            post.update(**payload)
+            response = {
+                "status": "success",
+                "data": {
+                    "id": post.first().id,
+                    "text": payload['text'],
+                    "title": payload['title'],
+                },
+            }
+            return JsonResponse(response, status=200)
+        except Exception as e:
+            response = {
+                "status": "error",
+                "message": "Unable to edit the post: {}".format(e)
+            }
+            return JsonResponse(response, status=500)
 
     def delete(self, request, postid):
         """

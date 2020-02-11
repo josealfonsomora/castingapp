@@ -12,13 +12,8 @@ from rest_framework.views import APIView
 from rest_framework import permissions
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-from .serializers import CustomTokenObtainPairSerializer
 from .models import UserProfile
 from ..utils.pwdgenerator import randomStringDigits
-
-
-class EmailTokenObtainPairView(TokenObtainPairView):
-    serializer_class = CustomTokenObtainPairSerializer
 
 
 class CurrentUserProfile(APIView):
@@ -45,8 +40,7 @@ class CurrentUserProfile(APIView):
         profile_obj = request.user.profile
         profile = UserProfile.objects.filter(id=profile_obj.id)
         if profile:
-            allowed_fields = ['name', 'surname', 'language', 'dob', 'address',
-                              'email', 'parent_email', 'parent_phone', 'phone']
+            allowed_fields = ['name', 'surname', 'dob', 'email', 'phone']
             payload = json.loads(request.body)
             for field in list(payload.keys()):
                 if field in allowed_fields:
@@ -78,30 +72,30 @@ class CurrentUserProfile(APIView):
 
 
 class UserRecoverPassword(APIView):
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (permissions.AllowAny,)
 
     def post(self, request, format=None):
         """Request a neew password for a user."""
         payload = json.loads(request.body)
         try:
-            user = User.objects.get(email=payload)
-            school = School.objects.filter(Q(students=request.user)|Q(admins=request.user)).first()
+            userprofile = UserProfile.objects.get(phone=payload.get('phone', ''))
+            user = userprofile.user
             new_password = randomStringDigits(8)
             user.set_password(new_password)
             user.save()
             send_mail(
-                    'Your new TYM password',
-                    'Hello {}, you have requested a new password for TYM, here it comes! {}'.format(user.profile.name, new_password),
+                    'Your new password',
+                    'Hello {}, you have requested a new password, here it comes! {}'.format(user.profile.name, new_password),
                     settings.EMAIL_SEND_FROM,
-                    user.profile.email,
+                    (user.profile.email, ),
                     fail_silently=False,
                 )
             payload = {
                 "status": "success"
             }
             return JsonResponse(payload, status=200, safe=False)
-        except:
-            return JsonResponse({'status': 'error', 'message': 'Error obtaining the user'}, status=500)
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': 'Error obtaining the user: {}'.format(e)}, status=500)
 
 
 class UserDeactivate(APIView):
@@ -158,10 +152,10 @@ class UserChangePassword(APIView):
                 user.set_password(new_password)
                 user.save()
                 send_mail(
-                        'Your TYM password has changed',
-                        'Hello {}, you or someone else has changed your password for TYM.',
+                        'Your password has changed',
+                        'Hello {}, you or someone else has changed your password.',
                         settings.EMAIL_SEND_FROM,
-                        user.profile.email,
+                        (user.profile.email,),
                         fail_silently=False,
                     )
                 payload = {
@@ -174,5 +168,5 @@ class UserChangePassword(APIView):
                     "message": "Current password is invalid."
                 }
                 return JsonResponse(payload, status=400, safe=False)
-        except:
-            return JsonResponse({'status': 'error', 'message': 'Error obtaining the user'}, status=500)
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': 'Error obtaining the user: {}'.format(e)}, status=500)

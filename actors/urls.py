@@ -16,12 +16,19 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 
-from apps.accounts.views import EmailTokenObtainPairView
-from apps.posts.views import PostResource, PostSingleResource, PostMediaResource, PostMediaSingleResource
+from rest_framework_simplejwt.views import (TokenObtainPairView)
+from apps.accounts.serializers import CustomJWTSerializer
+from apps.posts.views import (PostResource, PostSingleResource,
+                              PostMediaResource, PostMediaSingleResource)
+from apps.accounts.views import (CurrentUserProfile, UserRecoverPassword,
+                                 UserChangePassword)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('login/', EmailTokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path('auth/login/', TokenObtainPairView.as_view(serializer_class=CustomJWTSerializer), name='auth_get_token'),
+    path('auth/recoverpass/', UserRecoverPassword.as_view(), name='auth_recover_pass'),
+    path('auth/changepass/', UserChangePassword.as_view(), name='auth_change_pass'),
+    path('auth/profile/', CurrentUserProfile.as_view(), name='auth_change_pass'),
     path('posts/<int:postid>/', PostSingleResource.as_view()),
     path('posts/', PostResource.as_view()),
     path('postmedia/<int:postid>/', PostMediaSingleResource.as_view()),

@@ -1,22 +1,18 @@
-from rest_framework_simplejwt.serializers import TokenObtainSerializer
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth.models import User
 
-
-class EmailTokenObtainSerializer(TokenObtainSerializer):
-    username_field = User.username
-
-
-class CustomTokenObtainPairSerializer(EmailTokenObtainSerializer):
-    @classmethod
-    def get_token(cls, user):
-        return RefreshToken.for_user(user)
-
+class CustomJWTSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
-        data = super().validate(attrs)
+        credentials = {
+            'username': '',
+            'password': attrs.get("password")
+        }
 
-        refresh = self.get_token(self.user)
+        # This is answering the original question, but do whatever you need here.
+        # For example in my case I had to check a different model that stores more user info
+        # But in the end, you should obtain the username to continue.
+        user_obj = User.objects.filter(profile__phone=attrs.get("username")).first() or User.objects.filter(username=attrs.get("username")).first()
+        if user_obj:
+            credentials['username'] = user_obj.username
 
-        data["refresh"] = str(refresh)
-        data["access"] = str(refresh.access_token)
-
-        return data
+        return super().validate(credentials)

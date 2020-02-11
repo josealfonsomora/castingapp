@@ -10,7 +10,7 @@ class PostMedia(BaseModel):
     uuid = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False,
     )
-    post = models.ForeignKey('Post', on_delete=models.CASCADE)
+    postitem = models.ForeignKey('Post', on_delete=models.CASCADE)
     title = models.CharField(max_length=255, blank=True, null=True)
     datafile = models.FileField()
     media_type = models.CharField(max_length=20, default="unknown")
@@ -19,14 +19,14 @@ class PostMedia(BaseModel):
         return {'media_type': self.media_type, 'url': self.datafile.url, 'title': self.title, 'id': self.uuid}
 
     def __str__(self):
-        return "Post {} - {} - {}. UUID: {}".format(self.post.id, self.media_type, self.title, self.uuid)
+        return "Post {} - {} - {}. UUID: {}".format(self.postitem.id, self.media_type, self.title, self.uuid)
 
 
 class Post(BaseModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     text = models.TextField()
     title = models.CharField(max_length=255, blank=True, null=True)
-    media = models.ManyToManyField(PostMedia, null=True, blank=True, related_name='attachments')
+    media = models.ManyToManyField(PostMedia, null=True, blank=True)
 
     def __str__(self):
         return "{} - {}".format(self.user.profile.name, self.title)

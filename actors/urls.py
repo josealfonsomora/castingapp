@@ -16,7 +16,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 
-from .views import EmailTokenObtainPairView
+from apps.accounts.views import EmailTokenObtainPairView
 
 urlpatterns = [
     path('admin/', admin.site.urls),

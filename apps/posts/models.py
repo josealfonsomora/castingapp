@@ -26,7 +26,7 @@ class Post(BaseModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     text = models.TextField()
     title = models.CharField(max_length=255, blank=True, null=True)
-    media = models.ManyToManyField(PostMedia, null=True, blank=True)
+    media = models.ManyToManyField(PostMedia, null=True, blank=True, related_name='attachments')
 
     def __str__(self):
         return "{} - {}".format(self.user.profile.name, self.title)

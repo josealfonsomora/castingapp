@@ -1,7 +1,9 @@
 from rest_framework_simplejwt.serializers import TokenObtainSerializer
+from django.contrib.auth.models import User
+
 
 class EmailTokenObtainSerializer(TokenObtainSerializer):
-    username_field = User.profile.phone
+    username_field = User.username
 
 
 class CustomTokenObtainPairSerializer(EmailTokenObtainSerializer):

@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 """
 
 import os
+from datetime import timedelta
+
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -39,6 +41,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'corsheaders',
+    'apps.accounts',
+    'apps.posts'
 ]
 
 MIDDLEWARE = [
@@ -80,11 +84,11 @@ ALLOWED_HOSTS = ['*']
 
 DATABASES = {
     'default': {
-        'NAME': 'tym_srv',
+        'NAME': 'casting',
         'ENGINE': 'django.db.backends.postgresql',
         'USER': 'postgres',
-        'PASSWORD': '4J2bPbMT5jLe5Re9',
-        'HOST': '172.17.0.2',
+        'PASSWORD': 'root',
+        'HOST': '172.17.0.4',
         'PORT': '5432',
     }
 }

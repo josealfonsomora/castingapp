@@ -154,7 +154,7 @@ EMAIL_USE_TLS = True
 EMAIL_PORT = 587
 EMAIL_HOST_USER = 'castingplsf@gmail.com'
 EMAIL_SEND_FROM = 'castingplsf@gmail.com'
-EMAIL_HOST_PASSWORD = '213h5jh54k12'
+EMAIL_HOST_PASSWORD = ''
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/

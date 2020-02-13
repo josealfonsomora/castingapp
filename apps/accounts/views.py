@@ -1,4 +1,5 @@
 import json
+import uuid
 
 from django.contrib.auth.models import User
 from django.core import serializers
@@ -11,9 +12,10 @@ from django.contrib.auth.hashers import check_password
 from rest_framework.views import APIView
 from rest_framework import permissions
 from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import UserProfile
-from ..utils.pwdgenerator import randomStringDigits
+from ..utils.generators import passwordgenerator, codegenerator
 
 
 class CurrentUserProfile(APIView):
@@ -70,24 +72,53 @@ class CurrentUserProfile(APIView):
             }
             return JsonResponse(payload, status=500, safe=False)
 
-
-class UserRecoverPassword(APIView):
+class CreateUser(APIView):
     permission_classes = (permissions.AllowAny,)
 
-    def post(self, request, format=None):
-        """Request a neew password for a user."""
+    def post(self, request):
         payload = json.loads(request.body)
         try:
-            userprofile = UserProfile.objects.get(phone=payload.get('phone', ''))
-            user = userprofile.user
-            new_password = randomStringDigits(8)
-            user.set_password(new_password)
-            user.save()
+            new_username = passwordgenerator()
+            new_password = passwordgenerator()
+            user = User.objects.create_user(new_username, payload.get('email', ''), new_password)
+            profile = UserProfile(user=user,
+                                name=payload.get('name', ''),
+                                surname=payload.get('surname', ''),
+                                dob=payload.get('dob', ''),
+                                phone=payload.get('phone', ''),
+                                email=payload.get('email', '')
+                                )
+            profile.save()
+            # TODO: Send email notifying the user that the account is created
+            payload = {
+                "status": "success",
+                "message": "User created succesfully"
+            }
+            return JsonResponse(payload, status=200, safe=False)
+        except Exception as e:
+            payload = {
+                "status": "error",
+                "message": "There has been an error while creating the user: {}".format(e)
+            }
+            return JsonResponse(payload, status=500, safe=False)
+
+
+class LoginResource(APIView):
+    permission_classes = (permissions.AllowAny,)
+
+    def post(self, request):
+        payload = json.loads(request.body)
+        try:
+            profile = UserProfile.objects.get(phone=payload.get('phone', ''))
+            code = codegenerator()
+            profile.authentication_code = code
+            profile.save()
+            # TODO: Send the generated code over SMS
             send_mail(
-                    'Your new password',
-                    'Hello {}, you have requested a new password, here it comes! {}'.format(user.profile.name, new_password),
+                    'Your authentication code',
+                    'Your authentication code is: {}'.format(code),
                     settings.EMAIL_SEND_FROM,
-                    (user.profile.email, ),
+                    (profile.email,),
                     fail_silently=False,
                 )
             payload = {
@@ -95,78 +126,41 @@ class UserRecoverPassword(APIView):
             }
             return JsonResponse(payload, status=200, safe=False)
         except Exception as e:
-            return JsonResponse({'status': 'error', 'message': 'Error obtaining the user: {}'.format(e)}, status=500)
-
-
-class UserDeactivate(APIView):
-    permission_classes = (permissions.IsAuthenticated,)
-
-    def post(self, request, userid, format=None):
-        try:
-            selected_user = User.objects.get(id=userid)
-            # Check that the user has a school
-            school = selected_user.school_students.all()
-            if school:
-                # Check im an admin for that school
-                if request.user in school[0].admins.all() or request.user.is_superuser:
-                    selected_user.is_active = False
-                    selected_user.save()
-                    payload = {
-                        "status": "success",
-                        "message": "User deactivated"
-                    }
-                    return JsonResponse(payload, status=200, safe=False)
-                else:
-                    payload = {
-                        "status": "error",
-                        "message": "You don't have access to this resource"
-                    }
-                    return JsonResponse(payload, status=403, safe=False)
-            else:
-                payload = {
-                    "status": "error",
-                    "message": "No school found for that user"
-                }
-                return JsonResponse(payload, status=403, safe=False)
-        except Exception as e:
             payload = {
                 "status": "error",
-                "message": "An error has ocurred: {}".format(e)
+                "message": "Unable to obtain the user: {}".format(e)
             }
             return JsonResponse(payload, status=500, safe=False)
 
 
-class UserChangePassword(APIView):
-    permission_classes = (permissions.IsAuthenticated,)
+class ValidateCodeAndLogin(APIView):
+    permission_classes = (permissions.AllowAny,)
 
-    def post(self, request, format=None):
-        """Change the password of a user."""
+    def post(self, request):
         payload = json.loads(request.body)
         try:
-            user = request.user
-            current_password = request.user.password
-            old_password = payload['old_password']
-            new_password = payload['password']
-            password_valid = check_password(old_password, current_password)
-            if password_valid:
-                user.set_password(new_password)
-                user.save()
-                send_mail(
-                        'Your password has changed',
-                        'Hello {}, you or someone else has changed your password.',
-                        settings.EMAIL_SEND_FROM,
-                        (user.profile.email,),
-                        fail_silently=False,
-                    )
-                payload = {
-                    "status": "success"
+            profile = UserProfile.objects.get(phone=payload.get('phone', ''))
+            code = payload.get('validation_code', 'INVALID')
+            if code == profile.authentication_code:
+                profile.validated = True
+                profile.authentication_code = ''
+                profile.save()
+                refresh = RefreshToken.for_user(profile.user)
+                response = {
+                    'refresh': str(refresh),
+                    'access': str(refresh.access_token),
                 }
-                return JsonResponse(payload, status=200, safe=False)
+                return JsonResponse(response, status=200, safe=False)
             else:
                 payload = {
-                    "status": "failed",
-                    "message": "Current password is invalid."
+                    "status": "error",
+                    "message": "Invalid authentication code"
                 }
-                return JsonResponse(payload, status=400, safe=False)
+                return JsonResponse(payload, status=403, safe=False)
+
         except Exception as e:
-            return JsonResponse({'status': 'error', 'message': 'Error obtaining the user: {}'.format(e)}, status=500)
+            payload = {
+                "status": "error",
+                "message": "Unable to obtain the user: {}".format(e)
+            }
+            return JsonResponse(payload, status=500, safe=False)

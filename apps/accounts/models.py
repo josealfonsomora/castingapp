@@ -16,14 +16,15 @@ class UserType(BaseModel):
 
 class UserProfile(BaseModel):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
-    avatar = models.ImageField()
-    name = models.CharField(max_length=255)
-    surname = models.CharField(max_length=255)
-    dob = models.DateField()
-    email = models.EmailField()
-    phone = models.CharField(max_length=255)
+    avatar = models.ImageField(null=True, blank=True)
+    name = models.CharField(max_length=255, null=True, blank=True)
+    surname = models.CharField(max_length=255, null=True, blank=True)
+    dob = models.DateField(null=True, blank=True)
+    email = models.EmailField(null=True, blank=True)
+    phone = models.CharField(max_length=255, unique=True)
+    validated = models.BooleanField(default=False)
+    authentication_code = models.CharField(max_length=10, null=True, blank=True)
     user_type = models.ForeignKey(UserType, on_delete=models.CASCADE)
-    PHONE_FIELD = 'phone'
 
     def __str__(self):
         return "{}: {} {}".format(self.user_type, self.name, self.surname)

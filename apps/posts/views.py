@@ -130,11 +130,11 @@ class PostMediaSingleResource(APIView):
         except Exception as e:
             response = {
                 "status": "error",
-                "message": "No school or post found with that ID: {}".format(e)
+                "message": "Unable to retrieve post: {}".format(e)
             }
             return JsonResponse(response, status=500)
         try:
-            post_media = PostMedia.objects.create(post=post, title=request.data['title'], datafile=request.data['file'])
+            post_media = PostMedia.objects.create(postitem=post, title=request.data['title'], datafile=request.data['file'])
             post.media.add(post_media)
             response = {
                 "status": "success",
@@ -149,5 +149,57 @@ class PostMediaSingleResource(APIView):
             response = {
                 "status": "error",
                 "message": "There has been an error saving the media: {}".format(e)
+            }
+            return JsonResponse(response, status=500)
+
+    def put(self, request, postid, format=None):
+        media_file = request.data.get('file', '')
+        media_title = request.data.get('title', '')
+        media_uuid = request.data.get('media_uuid', 'INVALID')
+        try:
+            post = Post.objects.get(id=postid)
+            postmedia = PostMedia.objects.get(uuid=media_uuid)
+        except Exception as e:
+            response = {
+                "status": "error",
+                "message": "Unable to retrieve post: {}".format(e)
+            }
+            return JsonResponse(response, status=500)
+        if media_file:
+            postmedia.datafile = media_file
+        if media_title:
+            postmedia.title = media_title
+        try:
+            postmedia.save()
+            response = {
+                "status": "success",
+                "data": {
+                    "id": post.id,
+                    "media_uuid": media_uuid,
+                    "title": media_title,
+                    "file": postmedia.datafile.url
+                },
+            }
+            return JsonResponse(response, status=200)
+        except Exception as e:
+            response = {
+                "status": "error",
+                "message": "There has been an error saving the media: {}".format(e)
+            }
+            return JsonResponse(response, status=500)
+
+
+class PostMediaDeleteResource(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    def delete(self, request, mediaid, format=None):
+        try:
+            postmedia = PostMedia.objects.get(uuid=mediaid)
+            postmedia.delete()
+            response = {"status": "success"}
+            return JsonResponse(response, status=200)
+        except Exception as e:
+            response = {
+                "status": "error",
+                "message": "Unable to delete media: {}".format(e)
             }
             return JsonResponse(response, status=500)

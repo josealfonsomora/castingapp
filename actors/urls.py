@@ -16,21 +16,20 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 
-from rest_framework_simplejwt.views import (TokenObtainPairView)
-from apps.accounts.serializers import CustomJWTSerializer
 from apps.posts.views import (PostResource, PostSingleResource,
-                              PostMediaResource, PostMediaSingleResource)
-from apps.accounts.views import (CurrentUserProfile, UserRecoverPassword,
-                                 UserChangePassword)
+                              PostMediaResource, PostMediaSingleResource,
+                              PostMediaDeleteResource)
+from apps.accounts.views import (CurrentUserProfile, LoginResource, CreateUser,
+                                 ValidateCodeAndLogin)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('auth/login/', TokenObtainPairView.as_view(serializer_class=CustomJWTSerializer), name='auth_get_token'),
-    path('auth/recoverpass/', UserRecoverPassword.as_view(), name='auth_recover_pass'),
-    path('auth/changepass/', UserChangePassword.as_view(), name='auth_change_pass'),
+    path('auth/register/', CreateUser.as_view(), name='auth_register'),
+    path('auth/login/', LoginResource.as_view(), name='auth_send_code'),
+    path('auth/validatecode/', ValidateCodeAndLogin.as_view(), name='auth_get_token'),
     path('auth/profile/', CurrentUserProfile.as_view(), name='auth_change_pass'),
     path('posts/<int:postid>/', PostSingleResource.as_view()),
     path('posts/', PostResource.as_view()),
     path('postmedia/<int:postid>/', PostMediaSingleResource.as_view()),
-    path('postmedia/', PostMediaResource.as_view())
+    path('postmedia/delete/<uuid:mediaid>/', PostMediaDeleteResource.as_view())
 ]

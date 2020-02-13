@@ -124,10 +124,10 @@ USE_TZ = True
 # django-storages
 AWS_ACCESS_KEY_ID = ''
 AWS_SECRET_ACCESS_KEY = ''
-AWS_STORAGE_BUCKET_NAME = 'safehouse-actors'
+AWS_STORAGE_BUCKET_NAME = ''
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 AWS_S3_FILE_OVERWRITE = False
-AWS_S3_REGION_NAME = 'eu-west-1'
+AWS_S3_REGION_NAME = ''
 
 
 STATIC_URL = '/static/'
@@ -144,17 +144,17 @@ REST_FRAMEWORK = {
     ]
 }
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=365),
 }
 
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = ''
+EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_USE_TLS = True
 EMAIL_PORT = 587
-EMAIL_HOST_USER = ''
-EMAIL_SEND_FROM = ''
-EMAIL_HOST_PASSWORD = ''
+EMAIL_HOST_USER = 'castingplsf@gmail.com'
+EMAIL_SEND_FROM = 'castingplsf@gmail.com'
+EMAIL_HOST_PASSWORD = '213h5jh54k12'
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/

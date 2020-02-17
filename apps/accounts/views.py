@@ -14,7 +14,9 @@ from rest_framework import permissions
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import UserProfile
+from twilio.rest import Client
+
+from .models import UserProfile, RegistryCode, UserType
 from ..utils.generators import passwordgenerator, codegenerator
 
 
@@ -78,23 +80,35 @@ class CreateUser(APIView):
     def post(self, request):
         payload = json.loads(request.body)
         try:
-            new_username = passwordgenerator()
-            new_password = passwordgenerator()
-            user = User.objects.create_user(new_username, payload.get('email', ''), new_password)
-            profile = UserProfile(user=user,
-                                name=payload.get('name', ''),
-                                surname=payload.get('surname', ''),
-                                dob=payload.get('dob', ''),
-                                phone=payload.get('phone', ''),
-                                email=payload.get('email', '')
-                                )
-            profile.save()
-            # TODO: Send email notifying the user that the account is created
-            payload = {
-                "status": "success",
-                "message": "User created succesfully"
-            }
-            return JsonResponse(payload, status=200, safe=False)
+            new_username = new_password = passwordgenerator()
+            phone = payload.get('phone', '')
+            # Check phone/code
+            registry_code = RegistryCode.objects.get(phone=phone)
+            if payload.get('code', '') == registry_code.code:
+                user = User.objects.create_user(new_username, payload.get('email', ''), new_password)
+                # Get user type
+                usertype = UserType.objects.get(name=payload.get('user_type', ''))
+                profile = UserProfile(user=user,
+                                      name=payload.get('name', ''),
+                                      surname=payload.get('surname', ''),
+                                      dob=payload.get('dob', ''),
+                                      phone=phone,
+                                      email=payload.get('email', ''),
+                                      user_type=usertype
+                                     )
+                profile.save()
+                refresh = RefreshToken.for_user(profile.user)
+                response = {
+                    'refresh': str(refresh),
+                    'access': str(refresh.access_token),
+                }
+                return JsonResponse(response, status=200, safe=False)
+            else:
+                payload = {
+                    "status": "error",
+                    "message": "Registration code invalid"
+                }
+                return JsonResponse(payload, status=400, safe=False)
         except Exception as e:
             payload = {
                 "status": "error",
@@ -113,14 +127,12 @@ class LoginResource(APIView):
             code = codegenerator()
             profile.authentication_code = code
             profile.save()
-            # TODO: Send the generated code over SMS
-            send_mail(
-                    'Your authentication code',
-                    'Your authentication code is: {}'.format(code),
-                    settings.EMAIL_SEND_FROM,
-                    (profile.email,),
-                    fail_silently=False,
-                )
+            twilio_client = Client(settings.TWILIO_ACCOUNTID, settings.TWILIO_AUTH_TOKEN)
+            message = twilio_client.messages.create(
+                    body="Your code is: {}".format(code),
+                    from_=settings.TWILIO_PHONE_NUMBER,
+                    to='{}'.format(phone)
+            )
             payload = {
                 "status": "success"
             }
@@ -162,5 +174,38 @@ class ValidateCodeAndLogin(APIView):
             payload = {
                 "status": "error",
                 "message": "Unable to obtain the user: {}".format(e)
+            }
+            return JsonResponse(payload, status=500, safe=False)
+
+
+class RegisterPhone(APIView):
+    permission_classes = (permissions.AllowAny,)
+    def post(self, request):
+        payload = json.loads(request.body)
+        try:
+            phone = payload.get('phone', '')
+            if phone:
+                code = codegenerator()
+                registration = RegistryCode.objects.create(phone=phone, code=code)
+                twilio_client = Client(settings.TWILIO_ACCOUNTID, settings.TWILIO_AUTH_TOKEN)
+                message = twilio_client.messages.create(
+                        body="Your code is: {}".format(code),
+                        from_=settings.TWILIO_PHONE_NUMBER,
+                        to='{}'.format(phone)
+                )
+                payload = {
+                    "status": "success"
+                }
+                return JsonResponse(payload, status=200, safe=False)
+            else:
+                payload = {
+                    "status": "error",
+                    "message": "Invalid phone number"
+                }
+                return JsonResponse(payload, status=400, safe=False)
+        except Exception as e:
+            payload = {
+                "status": "error",
+                "message": "Unable to create registration: {}".format(e)
             }
             return JsonResponse(payload, status=500, safe=False)

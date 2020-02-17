@@ -27,6 +27,20 @@ class Post(BaseModel):
     text = models.TextField()
     title = models.CharField(max_length=255, blank=True, null=True)
     media = models.ManyToManyField(PostMedia, null=True, blank=True)
+    post_type = models.CharField(max_length=255)
 
     def __str__(self):
         return "{} - {}".format(self.user.profile.name, self.title)
+
+    def to_json(self):
+        return dict(
+            active=self.active,
+            deleted=self.deleted,
+            pub_date=self.pub_date,
+            mod_date=self.mod_date,
+            user={'name':self.user.profile.name, 'surname':self.user.profile.surname, 'user_type':self.user.profile.user_type.natural_key()},
+            text=self.text,
+            title=self.title,
+            post_type=self.post_type,
+            media=[media.natural_key() for media in self.media.all()]
+        )

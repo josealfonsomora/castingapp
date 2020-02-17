@@ -28,3 +28,9 @@ class UserProfile(BaseModel):
 
     def __str__(self):
         return "{}: {} {}".format(self.user_type, self.name, self.surname)
+
+
+class RegistryCode(BaseModel):
+    phone = models.CharField(max_length=255, unique=True)
+    code = models.CharField(max_length=7)
+    consumed = models.BooleanField(default=False)

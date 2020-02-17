@@ -24,10 +24,14 @@ class PostResource(APIView):
         Get all posts
         """
         posts = Post.objects.all()
-        serialized_data = serializers.serialize('json', posts, use_natural_foreign_keys=True)
+        # serialized_data = serializers.serialize('json', posts, use_natural_foreign_keys=True)
+        # payload = {
+        #     "status": "success",
+        #     "data": json.loads(serialized_data)
+        # }
         payload = {
             "status": "success",
-            "data": json.loads(serialized_data)
+            "data": [post.to_json() for post in posts]
         }
         return JsonResponse(payload, status=200)
 

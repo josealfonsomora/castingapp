@@ -9,3 +9,4 @@ django-cors-headers
 django-storages
 boto3
 django_sendmail_backend
+twilio

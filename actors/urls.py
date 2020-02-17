@@ -20,14 +20,15 @@ from apps.posts.views import (PostResource, PostSingleResource,
                               PostMediaResource, PostMediaSingleResource,
                               PostMediaDeleteResource)
 from apps.accounts.views import (CurrentUserProfile, LoginResource, CreateUser,
-                                 ValidateCodeAndLogin)
+                                 ValidateCodeAndLogin, RegisterPhone)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('auth/register/', CreateUser.as_view(), name='auth_register'),
-    path('auth/login/', LoginResource.as_view(), name='auth_send_code'),
-    path('auth/validatecode/', ValidateCodeAndLogin.as_view(), name='auth_get_token'),
-    path('auth/profile/', CurrentUserProfile.as_view(), name='auth_change_pass'),
+    path('auth/register/step1/', RegisterPhone.as_view()),
+    path('auth/register/step2/', CreateUser.as_view()),
+    path('auth/login/', LoginResource.as_view()),
+    path('auth/validatecode/', ValidateCodeAndLogin.as_view()),
+    path('auth/profile/', CurrentUserProfile.as_view()),
     path('posts/<int:postid>/', PostSingleResource.as_view()),
     path('posts/', PostResource.as_view()),
     path('postmedia/<int:postid>/', PostMediaSingleResource.as_view()),

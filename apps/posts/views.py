@@ -39,13 +39,14 @@ class PostResource(APIView):
         """Createe a new post"""
         payload = json.loads(request.body)
         try:
-            post = Post.objects.create(user=request.user, text=payload['text'], title=payload['title'])
+            post = Post.objects.create(user=request.user, text=payload['text'], title=payload['title'], post_type=payload['post_type'])
             response = {
                 "status": "success",
                 "data": {
                     "id": post.id,
                     "text": payload['text'],
                     "title": payload['title'],
+                    "post_type": payload['post_type']
                 },
             }
             return JsonResponse(response, status=200)
